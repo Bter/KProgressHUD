@@ -225,6 +225,11 @@ public class KProgressHUD {
         return this;
     }
 
+    public KProgressHUD setUseDimBehind(boolean useDimBehind) {
+        mProgressDialog.setUseDimBehind(useDimBehind);
+        return this;
+    }
+
     /**
      * Set current progress. Only have effect when use with a determinate style, or a custom
      * view which implements Determinate interface.
@@ -349,6 +354,7 @@ public class KProgressHUD {
         private int mWidth, mHeight;
         private int mLabelColor = Color.WHITE;
         private int mDetailColor = Color.WHITE;
+        private boolean useDimBehind = true;
 		
         public ProgressDialog(Context context) {
             super(context);
@@ -362,7 +368,11 @@ public class KProgressHUD {
 
             Window window = getWindow();
             window.setBackgroundDrawable(new ColorDrawable(0));
-            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            if(useDimBehind) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            }else{
+                window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            }
             WindowManager.LayoutParams layoutParams = window.getAttributes();
             layoutParams.dimAmount = mDimAmount;
             layoutParams.gravity = Gravity.CENTER;
@@ -494,6 +504,10 @@ public class KProgressHUD {
             if (mBackgroundLayout != null) {
                 updateBackgroundSize();
             }
+        }
+
+        public void setUseDimBehind(boolean useDimBehind) {
+            this.useDimBehind = useDimBehind;
         }
     }
 }
