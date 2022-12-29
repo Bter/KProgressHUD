@@ -29,9 +29,16 @@ Android 2.3 and later
 Include this in your app `build.gradle`
 
 ```
+allprojects {
+	repositories {
+	...
+	maven { url 'https://jitpack.io' }
+	}
+}
+	
 dependencies {
     // Other dependencies
-    implementation 'com.peter.lib:kprogresshud:1.2.0'
+    implementation 'com.github.Bter:KProgressHUD:1.2.1'
 }
 ```
 
