@@ -9,5 +9,5 @@ package com.kaopiz.kprogresshud;
  * time: 2023/4/19<br/>
  */
 public interface KProgressShowListener {
-    void onShow(KProgressHUD dialog);
+    void onWantShow(KProgressHUD dialog);
 }

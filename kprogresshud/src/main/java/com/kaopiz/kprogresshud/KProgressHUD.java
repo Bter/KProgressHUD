@@ -314,20 +314,20 @@ public class KProgressHUD {
         if (!isShowing()) {
             mFinished = false;
             if (mGraceTimeMs == 0) {
-                mProgressDialog.show();
                 if(KProgressHUD.showListener != null){
-                    KProgressHUD.showListener.onShow(this);
+                    KProgressHUD.showListener.onWantShow(this);
                 }
+                mProgressDialog.show();
             } else {
                 mGraceTimer = new Handler();
                 mGraceTimer.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         if (mProgressDialog != null && !mFinished) {
-                            mProgressDialog.show();
                             if(KProgressHUD.showListener != null){
-                                KProgressHUD.showListener.onShow(KProgressHUD.this);
+                                KProgressHUD.showListener.onWantShow(KProgressHUD.this);
                             }
+                            mProgressDialog.show();
                         }
                     }
                 }, mGraceTimeMs);
