@@ -38,7 +38,7 @@ allprojects {
 	
 dependencies {
     // Other dependencies
-    implementation 'com.github.Bter:KProgressHUD:1.2.1'
+    implementation 'com.github.Bter:KProgressHUD:1.2.2'
 }
 ```
 
