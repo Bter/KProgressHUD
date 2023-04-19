@@ -53,6 +53,7 @@ public class KProgressHUD {
     private int mGraceTimeMs;
     private Handler mGraceTimer;
     private boolean mFinished;
+    private static KProgressShowListener showListener;
 
     public KProgressHUD(Context context) {
         mContext = context;
@@ -67,6 +68,10 @@ public class KProgressHUD {
         mFinished = false;
 
         setStyle(Style.SPIN_INDETERMINATE);
+    }
+
+    public static void setShowListener(KProgressShowListener showListener) {
+        KProgressHUD.showListener = showListener;
     }
 
     /**
@@ -310,6 +315,9 @@ public class KProgressHUD {
             mFinished = false;
             if (mGraceTimeMs == 0) {
                 mProgressDialog.show();
+                if(KProgressHUD.showListener != null){
+                    KProgressHUD.showListener.onShow(this);
+                }
             } else {
                 mGraceTimer = new Handler();
                 mGraceTimer.postDelayed(new Runnable() {
@@ -317,6 +325,9 @@ public class KProgressHUD {
                     public void run() {
                         if (mProgressDialog != null && !mFinished) {
                             mProgressDialog.show();
+                            if(KProgressHUD.showListener != null){
+                                KProgressHUD.showListener.onShow(KProgressHUD.this);
+                            }
                         }
                     }
                 }, mGraceTimeMs);
