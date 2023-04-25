@@ -351,9 +351,9 @@ public class KProgressHUD {
         }
     }
 
-   public Dialog getDialog(){
-	return mProgressDialog;
-   }
+    public Dialog getDialog(){
+        return mProgressDialog;
+    }
 
     private class ProgressDialog extends Dialog {
 
