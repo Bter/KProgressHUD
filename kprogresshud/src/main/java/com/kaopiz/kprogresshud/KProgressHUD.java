@@ -24,6 +24,8 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.ArrayMap;
+import android.util.ArraySet;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +33,11 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.HashSet;
+import java.util.Iterator;
 
 public class KProgressHUD {
 
@@ -57,7 +64,7 @@ public class KProgressHUD {
 
     public KProgressHUD(Context context) {
         mContext = context;
-        mProgressDialog = new ProgressDialog(context);
+        mProgressDialog = new ProgressDialog(context,this);
         mDimAmount = 0;
         //noinspection deprecation
         mWindowColor = context.getResources().getColor(R.color.kprogresshud_default_color);
@@ -355,7 +362,12 @@ public class KProgressHUD {
         return mProgressDialog;
     }
 
-    private class ProgressDialog extends Dialog {
+    public synchronized static int getShowingCount(){
+        return ProgressDialog.getShowingCount();
+    }
+
+    private static class ProgressDialog extends Dialog {
+        private static final HashSet<WeakReference<DialogInterface>> showingDialog = new HashSet<>();
 
         private Determinate mDeterminateView;
         private Indeterminate mIndeterminateView;
@@ -370,9 +382,47 @@ public class KProgressHUD {
         private int mLabelColor = Color.WHITE;
         private int mDetailColor = Color.WHITE;
         private boolean useDimBehind = true;
+        private KProgressHUD kProgressHUD;
+        private OnDismissListener dismissListener;
+        private OnShowListener showListener;
+        private OnDismissListener innerDismissListener = new OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                showingDialog.remove(new MyWeakReference<DialogInterface>(dialog));
+                if(dismissListener != null){
+                    dismissListener.onDismiss(dialog);
+                }
+            }
+        };
 		
-        public ProgressDialog(Context context) {
+        public ProgressDialog(Context context,KProgressHUD kProgressHUD) {
             super(context);
+            this.kProgressHUD = kProgressHUD;
+            super.setOnDismissListener(innerDismissListener);
+            super.setOnShowListener(new OnShowListener() {
+                @Override
+                public void onShow(DialogInterface dialog) {
+                    showingDialog.add(new MyWeakReference<DialogInterface>(dialog));
+                    if(showListener != null){
+                        showListener.onShow(dialog);
+                    }
+                }
+            });
+        }
+
+        public synchronized static int getShowingCount(){
+            Iterator<WeakReference<DialogInterface>> it = showingDialog.iterator();
+            int count = 0;
+            while (it.hasNext()){
+                WeakReference<DialogInterface> weakReference = it.next();
+                if(weakReference == null)continue;
+                if(weakReference.get() == null){
+                    it.remove();
+                    continue;
+                }
+                count += 1;
+            }
+            return count;
         }
 
         @Override
@@ -389,7 +439,7 @@ public class KProgressHUD {
                 window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
             }
             WindowManager.LayoutParams layoutParams = window.getAttributes();
-            layoutParams.dimAmount = mDimAmount;
+            layoutParams.dimAmount = kProgressHUD.mDimAmount;
             layoutParams.gravity = Gravity.CENTER;
             window.setAttributes(layoutParams);
 
@@ -398,10 +448,32 @@ public class KProgressHUD {
             initViews();
         }
 
+        @Override
+        public void setOnDismissListener(OnDismissListener listener) {
+            this.dismissListener = listener;
+        }
+
+        @Override
+        public void setOnShowListener(OnShowListener listener) {
+            this.showListener = listener;
+        }
+
+        @Override
+        public void show() {
+            super.show();
+            showingDialog.add(new MyWeakReference<DialogInterface>(this));
+        }
+
+        @Override
+        public void dismiss() {
+            super.dismiss();
+            showingDialog.remove(new MyWeakReference<DialogInterface>(this));
+        }
+
         private void initViews() {
             mBackgroundLayout = (BackgroundLayout) findViewById(R.id.background);
-            mBackgroundLayout.setBaseColor(mWindowColor);
-            mBackgroundLayout.setCornerRadius(mCornerRadius);
+            mBackgroundLayout.setBaseColor(kProgressHUD.mWindowColor);
+            mBackgroundLayout.setCornerRadius(kProgressHUD.mCornerRadius);
             if (mWidth != 0) {
                 updateBackgroundSize();
             }
@@ -410,10 +482,10 @@ public class KProgressHUD {
             addViewToFrame(mView);
 
             if (mDeterminateView != null) {
-                mDeterminateView.setMax(mMaxProgress);
+                mDeterminateView.setMax(kProgressHUD.mMaxProgress);
             }
             if (mIndeterminateView != null) {
-                mIndeterminateView.setAnimationSpeed(mAnimateSpeed);
+                mIndeterminateView.setAnimationSpeed(kProgressHUD.mAnimateSpeed);
             }
 
             mLabelText = (TextView) findViewById(com.kaopiz.kprogresshud.R.id.label);
@@ -439,7 +511,7 @@ public class KProgressHUD {
         public void setProgress(int progress) {
             if (mDeterminateView != null) {
                 mDeterminateView.setProgress(progress);
-                if (mIsAutoDismiss && progress >= mMaxProgress) {
+                if (kProgressHUD.mIsAutoDismiss && progress >= kProgressHUD.mMaxProgress) {
                     dismiss();
                 }
             }
@@ -523,6 +595,36 @@ public class KProgressHUD {
 
         public void setUseDimBehind(boolean useDimBehind) {
             this.useDimBehind = useDimBehind;
+        }
+    }
+
+    private static class MyWeakReference<T> extends WeakReference<T>{
+        private int hashCode;
+
+        public MyWeakReference(T referent) {
+            super(referent);
+            if(referent != null){
+                hashCode = referent.hashCode();
+            }else{
+                hashCode = super.hashCode();
+            }
+        }
+
+        public MyWeakReference(T referent, ReferenceQueue<? super T> q) {
+            super(referent, q);
+            if(referent != null){
+                hashCode = referent.hashCode();
+            }else{
+                hashCode = super.hashCode();
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            if(get() != null){
+                return get().hashCode();
+            }
+            return hashCode;
         }
     }
 }
