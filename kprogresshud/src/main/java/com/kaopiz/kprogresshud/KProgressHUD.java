@@ -351,6 +351,10 @@ public class KProgressHUD {
         }
     }
 
+   public Dialog getDialog(){
+	return mProgressDialog;
+   }
+
     private class ProgressDialog extends Dialog {
 
         private Determinate mDeterminateView;
