@@ -620,9 +620,42 @@ public class KProgressHUD {
         }
 
         @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if(o instanceof MyWeakReference) {
+                MyWeakReference<?> that = (MyWeakReference<?>) o;
+
+                Object object = get();
+                o = that.get();
+                if(object == o)return true;
+                if(null == object && o != null){
+                    return false;
+                }else if(null != object && o == null){
+                    return false;
+                }else{
+                    //都不为空
+                    return o.equals(object);
+                }
+//            return hashCode == that.hashCode;
+            }else{
+                Object object = get();
+                if(object == o)return true;
+                if(null == object && o != null){
+                    return false;
+                }else if(null != object && o == null){
+                    return false;
+                }else{
+                    //都不为空
+                    return o.equals(object);
+                }
+            }
+        }
+
+        @Override
         public int hashCode() {
-            if(get() != null){
-                return get().hashCode();
+            Object obj;
+            if((obj = get()) != null){
+                return obj.hashCode();
             }
             return hashCode;
         }
